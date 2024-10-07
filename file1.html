@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="./WeatherStyle.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        /* Your CSS styles go here */
+        /* ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search">
+            <input type="text" placeholder="Enter City Name" id="cityInput">
+            <button id="searchBtn"><img src="./WeatherImages/clouds.png" alt="Weather"></button>
+            <div class="error" style="display: none;">
+                <p>Invalid City Name</p>
+            </div>
+        </div>
+        <div class="weather">
+            <img src="" class="icon" alt="">
+            <h1 class="celcius">--°C</h1>
+            <h2 class="city">--</h2>
+            <div class="detail">
+                <div class="col">
+                    <img src="./WeatherImages/humidity.png" alt="">
+                    <div class="humidity">
+                        <p class="humidityP">--%</p>
+                        <p>Humidity</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <img src="./WeatherImages/wind.png" alt="">
+                    <div class="wind">
+                        <p class="windS">--km/h</p>
+                        <p>Wind</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="air-pollution" style="display: none;">
+            <h2>Air Pollution Data</h2>
+            <div class="air-data">
+                <p>Air Quality Index (AQI): <span class="aqi">--</span></p>
+                <p>CO Concentration: <span class="co">--</span> µg/m³</p>
+                <p>NO2 Concentration: <span class="no2">--</span> µg/m³</p>
+                <p>O3 Concentration: <span class="o3">--</span> µg/m³</p>
+                <p>PM2.5 Concentration: <span class="pm25">--</span> µg/m³</p>
+                <p>PM10 Concentration: <span class="pm10">--</span> µg/m³</p>
+                <p>SO2 Concentration: <span class="so2">--</span> µg/m³</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchBtn = document.getElementById('searchBtn');
+        const cityInput = document.getElementById('cityInput');
+        const image = document.querySelector('.icon');
+        const airPollutionContainer = document.querySelector('.air-pollution');
+
+        async function getWeather(city) {
+            const apiKey = "974f1aedb5094d67397a30f8690fd58b"; // Replace with your Weather API key
+            const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+            try {
+                const response = await fetch(weatherApiUrl);
+                const data = await response.json();
+
+                if (response.status === 404) {
+                    document.querySelector('.error').style.display = "block";
+                    document.querySelector('.weather').style.display = "none";
+                } else {
+                    document.querySelector('.error').style.display = "none";
+                    document.querySelector('.weather').style.display = "block";
+
+                    document.querySelector('.celcius').innerHTML = `${data.main.temp}°C`;
+                    document.querySelector('.city').innerHTML = data.name;
+                    document.querySelector('.humidityP').innerHTML = `${data.main.humidity}%`;
+                    document.querySelector('.windS').innerHTML = `${data.wind.speed}km/h`;
+
+                    if (data.weather[0].main == "Clouds") {
+                        image.src = "./WeatherImages/clouds.png";
+                    } else if (data.weather[0].main == "Clear") {
+                        image.src = "./WeatherImages/clear.png";
+                    } else if (data.weather[0].main == "Rain") {
+                        image.src = "./WeatherImages/rain.png";
+                    } else if (data.weather[0].main == "Drizzle") {
+                        image.src = "./WeatherImages/drizzle.png";
+                    } else if (data.weather[0].main == "Mist") {
+                        image.src = "./WeatherImages/mist.png";
+                    }
+
+                    // Get latitude and longitude from weather data
+                    const lat = data.coord.lat;
+                    const lon = data.coord.lon;
+
+                    // Call the function to get air pollution data
+                    getAirPollution(lat, lon);
+                }
+            } catch (error) {
+                console.error("Error fetching weather data: ", error);
+                document.querySelector('.error').style.display = "block";
+                document.querySelector('.weather').style.display = "none";
+            }
+        }
+
+        async function getAirPollution(lat, lon) {
+            const apiKey = "974f1aedb5094d67397a30f8690fd58b"; // Replace with your Air Pollution API key
+            const airPollutionApiUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+
+            try {
+                const response = await fetch(airPollutionApiUrl);
+                const data = await response.json();
+
+                if (response.status === 404) {
+                    // Handle error or display a message
+                } else {
+                    // Process and display air pollution data
+                    const airData = data.list[0];
+
+                    const aqi = airData.main.aqi;
+                    const co = airData.components.co;
+                    const no2 = airData.components.no2;
+                    const o3 = airData.components.o3;
+                    const pm25 = airData.components.pm2_5;
+                    const pm10 = airData.components.pm10;
+                    const so2 = airData.components.so2;
+
+                    const aqiElement = document.querySelector('.aqi');
+                    const coElement = document.querySelector('.co');
+                    const no2Element = document.querySelector('.no2');
+                    const o3Element = document.querySelector('.o3');
+                    const pm25Element = document.querySelector('.pm25');
+                    const pm10Element = document.querySelector('.pm10');
+                    const so2Element = document.querySelector('.so2');
+
+                    aqiElement.textContent = aqi;
+                    coElement.textContent = co;
+                    no2Element.textContent = no2;
+                    o3Element.textContent = o3;
+                    pm25Element.textContent = pm25;
+                    pm10Element.textContent = pm10;
+                    so2Element.textContent = so2;
+
+                    airPollutionContainer.style.display = "block";
+                }
+            } catch (error) {
+                console.error("Error fetching air pollution data: ", error);
+                // Handle error or display an error message
+            }
+        }
+
+        searchBtn.addEventListener('click', () => {
+            const city = cityInput.value;
+            if (city.trim() !== "") {
+                getWeather(city);
+            }
+        });
+    </script>
+</body>
+</html>

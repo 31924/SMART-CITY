@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        /* Your CSS styles go here */
+        /* ... */
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .city-container {
+            flex: 1;
+            margin: 10px;
+            padding: 10px;
+            background: linear-gradient(130deg, rgb(43, 99, 218), rgb(22, 22, 220));
+            color: white;
+            border-radius: 10px;
+        }
+        .white-space {
+            width: 20px; /* Adjust as needed */
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="city-container">
+            <div class="search">
+                <div class="city-input">
+                    <input type="text" placeholder="Enter City Name" id="cityInput1">
+                    <button class="searchBtn" onclick="getWeather(1)">Search</button>
+                </div>
+            </div>
+            <div class="error" style="display: none;">
+                <p>Invalid City Name</p>
+            </div>
+            <div class="weather city1">
+                <!-- Weather data for the first city will be displayed here -->
+            </div>
+            <div class="air-pollution city1">
+                <!-- Air pollution data for the first city will be displayed here -->
+            </div>
+        </div>
+        <div class="white-space"></div>
+        <div class="city-container">
+            <div class="search">
+                <div class="city-input">
+                    <input type="text" placeholder="Enter City Name" id="cityInput2">
+                    <button class="searchBtn" onclick="getWeather(2)">Search</button>
+                </div>
+            </div>
+            <div class="error" style="display: none;">
+                <p>Invalid City Name</p>
+            </div>
+            <div class="weather city2">
+                <!-- Weather data for the second city will be displayed here -->
+            </div>
+            <div class="air-pollution city2">
+                <!-- Air pollution data for the second city will be displayed here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        const apiKey = "974f1aedb5094d67397a30f8690fd58b"; // Replace with your Weather API key
+
+        function getWeather(cityNumber) {
+            const cityInput = document.getElementById(`cityInput${cityNumber}`);
+            const weatherContainer = document.querySelector(`.weather.city${cityNumber}`);
+            const airPollutionContainer = document.querySelector(`.air-pollution.city${cityNumber}`);
+
+            const city = cityInput.value.trim();
+            if (city !== "") {
+                const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+                fetch(weatherApiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.cod === 200) {
+                            // Display weather data for the selected city
+                            weatherContainer.innerHTML = `
+                                <img src="${getWeatherIcon(data.weather[0].main)}" class="icon" alt="">
+                                <h1 class="celcius">${data.main.temp}°C</h1>
+                                <h2 class="city">${data.name}</h2>
+                                <div class="detail">
+                                    <div class="col">
+                                        <img src="./WeatherImages/humidity.png" alt="">
+                                        <div class="humidity">
+                                            <p class="humidityP">${data.main.humidity}%</p>
+                                            <p>Humidity</p>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <img src="./WeatherImages/wind.png" alt="">
+                                        <div class="wind">
+                                            <p class="windS">${data.wind.speed}km/h</p>
+                                            <p>Wind</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.querySelector('.error').style.display = "none";
+
+                            // Call a function to display air pollution data
+                            showAirPollution(cityNumber, data.coord.lat, data.coord.lon);
+                        } else {
+                            // Display an error message if the city is not found
+                            weatherContainer.innerHTML = `<p class="error">City not found</p>`;
+                            airPollutionContainer.innerHTML = ""; // Clear air pollution data
+                            document.querySelector('.error').style.display = "block";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching weather data: ", error);
+                        weatherContainer.innerHTML = `<p class="error">An error occurred</p>`;
+                        airPollutionContainer.innerHTML = ""; // Clear air pollution data
+                        document.querySelector('.error').style.display = "block";
+                    });
+            } else {
+                // Display an error message for empty input
+                weatherContainer.innerHTML = `<p class="error">Please enter a city name</p>`;
+                airPollutionContainer.innerHTML = ""; // Clear air pollution data
+                document.querySelector('.error').style.display = "block";
+            }
+        }
+
+        function getWeatherIcon(weather) {
+            switch (weather) {
+                case "Clouds":
+                    return "./WeatherImages/clouds.png";
+                case "Clear":
+                    return "./WeatherImages/clear.png";
+                case "Rain":
+                    return "./WeatherImages/rain.png";
+                case "Drizzle":
+                    return "./WeatherImages/drizzle.png";
+                case "Mist":
+                    return "./WeatherImages/mist.png";
+                default:
+                    return "";
+            }
+        }
+
+        function showAirPollution(cityNumber, lat, lon) {
+            const airPollutionContainer = document.querySelector(`.air-pollution.city${cityNumber}`);
+            const airPollutionApiUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+
+            fetch(airPollutionApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.cod === 200) {
+                        // Display air pollution data for the selected city
+                        airPollutionContainer.innerHTML = `
+                            <h2>Air Pollution Data</h2>
+                            <div class="air-data">
+                                <p>Air Quality Index (AQI): <span class="aqi">${data.list[0].main.aqi}</span></p>
+                                <p>CO Concentration: <span class="co">${data.list[0].components.co} µg/m³</span></p>
+                                <p>NO2 Concentration: <span class="no2">${data.list[0].components.no2} µg/m³</span></p>
+                                <p>O3 Concentration: <span class="o3">${data.list[0].components.o3} µg/m³</span></p>
+                                <p>PM2.5 Concentration: <span class="pm25">${data.list[0].components.pm2_5} µg/m³</span></p>
+                                <p>PM10 Concentration: <span class="pm10">${data.list[0].components.pm10} µg/m³</span></p>
+                                <p>SO2 Concentration: <span class="so2">${data.list[0].components.so2} µg/m³</span></p>
+                            </div>
+                        `;
+                    } else {
+                        // Display an error message if air pollution data is not available
+                        airPollutionContainer.innerHTML = `<p class="error">Air pollution data not available</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching air pollution data: ", error);
+                    airPollutionContainer.innerHTML = `<p class="error">An error occurred</p>`;
+                });
+        }
+    </script>
+</body>
+</html>
